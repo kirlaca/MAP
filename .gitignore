@@ -8,3 +8,4 @@ config/archiv/
 __pycache__/
 *.pyc
 .venv/
+site/

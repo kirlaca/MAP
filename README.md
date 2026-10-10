@@ -10,6 +10,8 @@ A program beolvassa a WebKincstár portfólió-exportját és letölti az aktuá
 
 Minden lépésnél kiírja a **várható nominális többletet, 1 évre vetítve**.
 
+**🌐 Napi kínálat online:** https://kirlaca.github.io/MAP/ – a most kapható állampapírok vetített kamata, és a program riportja egy kitalált minta-portfólióra. Naponta frissül (GitHub Actions).
+
 > ⚠️ Ez modellszámítás, nem befektetési tanácsadás. A vetített kamatok feltevéseken alapulnak. Kötés előtt nézd meg a WebKincstárban az aktuális kínálatot és árfolyamot.
 
 ## Fő funkciók
@@ -117,12 +119,29 @@ scripts/        allampapir_adatok.py   – adatletöltés (ÁKK, KSH, Eurostat, 
                 mak_portfolio_import.py – WebKincstár portfolio.xls → holdings.csv / cash.csv
                 negyedeves_ajanlo.py   – kamatvetítés, csere, devizaarány, riport
                 config_kezelo.py       – a config ellenőrzése és mentése
+                pages_build.py         – a GitHub Pages oldal (napi kínálat + minta-riport)
 config/         strategia.yaml (szabályok és feltevések)
 docs/           részletes leírás, forrásdokumentum
 minta/          portfolio_minta.xls (kitalált adatok)
+site/           a Pages-oldal buildje – NEM kerül gitbe
+.github/        a napi Pages-build munkafolyamata
 private/        a saját portfólió, riportok, exportok – NEM kerül gitbe (.gitignore)
 data/           letöltött adatok gyorsítótára – NEM kerül gitbe
 ```
+
+## GitHub Pages (napi kínálat)
+
+A `.github/workflows/pages.yml` naponta 05:15 UTC-kor, minden pushnál és kézi indításra lefuttatja a `scripts/pages_build.py` szkriptet:
+
+1. friss adatokat tölt le;
+2. a **minta-portfólióra** lefuttatja az ajánlót;
+3. statikus oldalt készít (`site/`), és kiteszi a Pages-re.
+
+Az oldalon az áll, ami mindenkinek érdekes: a most kapható papírok, az újdonságok, a feltevések és a teljes minta-riport. Személyes portfólió soha nem kerül oda.
+
+Helyben is kipróbálható: `python scripts/pages_build.py`, majd nyisd meg a `site/index.html` fájlt.
+
+Saját forkban a bekapcsolás: *Settings → Pages → Build and deployment → Source: GitHub Actions*.
 
 ## Adatvédelem és biztonság
 
