@@ -21,9 +21,13 @@ import datetime as dt
 import io
 import json
 import re
+import sys
 from pathlib import Path
 
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import verzio  # noqa: E402
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -212,6 +216,7 @@ def load(frissit: bool = False, log=print) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--version", action="version", version=verzio.cimke())
     ap.add_argument("--frissit", action="store_true", help="a mai cache ellenére újratölt")
     a = ap.parse_args()
     d = load(a.frissit)

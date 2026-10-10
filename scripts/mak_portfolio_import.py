@@ -24,6 +24,9 @@ from pathlib import Path
 
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import verzio  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 PRIV = ROOT / "private"
 
@@ -166,6 +169,7 @@ def save(h: pd.DataFrame, c: pd.DataFrame, snap: dict, minta: bool = False) -> P
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--version", action="version", version=verzio.cimke())
     ap.add_argument("xls", type=Path)
     ap.add_argument("--proba", action="store_true", help="csak kiírja, nem ment")
     a = ap.parse_args()

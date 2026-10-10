@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import config_kezelo as ck  # noqa: E402
 import mak_portfolio_import as imp  # noqa: E402
 import negyedeves_ajanlo as aj  # noqa: E402
+import verzio  # noqa: E402
 
 PRIV = ROOT / "private"
 STAGING = PRIV / "uploads/_staging"
@@ -224,7 +225,7 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         try:
             if u.path == "/":
-                page = (ROOT / "app/index.html").read_text(encoding="utf-8").replace("__TOKEN__", TOKEN)
+                page = (ROOT / "app/index.html").read_text(encoding="utf-8").replace("__TOKEN__", TOKEN).replace("__VERZIO__", verzio.verzio())
                 return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
             if u.path == "/api/config":
                 return self._json(ck.form_state())
@@ -298,7 +299,7 @@ def main() -> None:
         if "--no-browser" not in sys.argv:
             webbrowser.open(url)
         return
-    print(f"Állampapír-ajánló: {url}  (leállítás: Ctrl+C)")
+    print(f"{verzio.cimke()}: {url}  (leállítás: Ctrl+C)")
     if "--no-browser" not in sys.argv:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:

@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "app"))
 import config_kezelo as ck  # noqa: E402
 import mak_portfolio_import as imp  # noqa: E402
 import negyedeves_ajanlo as aj  # noqa: E402
+import verzio  # noqa: E402
 from webapp import md_to_html  # noqa: E402  (a szerver importkor nem indul el)
 
 MINTA = ROOT / "minta/portfolio_minta.xls"
@@ -67,7 +68,7 @@ def build(frissit: bool) -> Path:
 </head>
 <body>
 <header><div class="bar">
-  <div class="brand">Állampapír-ajánló <small>napi kínálat és minta-riport · {html.escape(ido)}</small></div>
+  <div class="brand">Állampapír-ajánló <small>v{html.escape(verzio.verzio())} · napi kínálat és minta-riport · {html.escape(ido)}</small></div>
   <nav><a class="btn" href="{REPO}">GitHub</a></nav>
 </div></header>
 <main>
@@ -94,7 +95,8 @@ def build(frissit: bool) -> Path:
     <p class="muted small">Markdownban: <a href="minta_riport.md">minta_riport.md</a></p></details>
   </div>
   <p class="muted small">Adatforrások: allampapir.hu (ÁKK), KSH, Eurostat, ECB. Frissítve: {html.escape(ido)}.
-  Forráskód: <a href="{REPO}">{REPO}</a> (MIT licenc).</p>
+  Forráskód: <a href="{REPO}">{REPO}</a> (MIT licenc) · {html.escape(verzio.cimke())} ·
+  <a href="{REPO}/blob/main/CHANGELOG.md">változások</a>.</p>
 </main>
 </body>
 </html>
@@ -108,6 +110,7 @@ def build(frissit: bool) -> Path:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--version", action="version", version=verzio.cimke())
     ap.add_argument("--frissit", action="store_true", help="az adatokat a mai cache ellenére újratölti")
     print("Oldal:", build(ap.parse_args().frissit))
 

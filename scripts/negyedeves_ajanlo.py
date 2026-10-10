@@ -34,6 +34,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import allampapir_adatok as ad  # noqa: E402
+import verzio  # noqa: E402
 
 D = dt.date
 NEV = {"PMÁP": "Prémium Magyar Állampapír", "PEMÁP": "Prémium Euró Magyar Állampapír",
@@ -657,7 +658,8 @@ def run(cfg: dict, holdings: Path, cash_file: Path, frissit: bool = False, log=p
       f"a most kapható BMÁP alapján {pct(bmap_base(r, data))}.")
     w(f"- Visszaváltás: nettó {pct(cfg['visszavaltas']['alap'], 1)} + felhalmozott kamat. MÁP Plusz a kamatjuttatás utáni "
       f"5 munkanapban {pct(cfg['visszavaltas']['MAP_Plusz_ablakban'], 1)}. Csereküszöb: évi {pct(cfg['csere']['min_elony_pp'], 1)} pont.")
-    w(f"- Adatok letöltve: {data.get('letoltve')} (allampapir.hu, KSH, Eurostat, ECB). Portfólió: private/holdings.csv.")
+    w(f"- Adatok letöltve: {data.get('letoltve')} (allampapir.hu, KSH, Eurostat, ECB). Portfólió: private/holdings.csv. "
+      f"Program: {verzio.cimke()}.")
     w("- Egyszerűsítések: kamatos kamat nélküli átlag; munkaszüneti napok nélkül. Az újrabefektetés (lejárat, kamat) "
       "a tartásnál és a cserénél azonos feltevéssel számol. A jövőbeli kínálat ismeretlen, ezért a terv a mai kínálattal számol.")
     for x in warn:
@@ -757,6 +759,7 @@ def deviza_igazitas(actions: list[dict], cfg: dict, best: dict, eur_eur: float, 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--version", action="version", version=verzio.cimke())
     ap.add_argument("--frissit", action="store_true", help="az adatokat a mai cache ellenére újratölti")
     ap.add_argument("--holdings", type=Path, default=ROOT / "private/holdings.csv")
     ap.add_argument("--cash", type=Path, default=ROOT / "private/cash.csv")

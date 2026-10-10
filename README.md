@@ -1,5 +1,7 @@
 # MÁP – állampapír-ajánló
 
+**Verzió: 1.1** · [Változások](CHANGELOG.md) · [MIT licenc](LICENSE)
+
 Negyedévente futtatható, helyi Python-program a **Magyar Államkincstárnál** (WebKincstár) vezetett lakossági állampapír-portfólióhoz.
 
 A program beolvassa a WebKincstár portfólió-exportját és letölti az aktuális kínálatot. Vetíti a tartott és a kapható sorozatok kamatát (infláció, DKJ, EURIBOR), majd javaslatot tesz:
