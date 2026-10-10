@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Állampapír-ajánló</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1b1f24; --muted:#5f6b7a; --line:#e2e6ec;
+  --accent:#1f6feb; --accent-ink:#ffffff; --ok:#1a7f37; --warn:#9a6700; --warn-bg:#fff8e5; --bad:#cf222e;
+  --chip:#eef2f7; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  /* grafikon: validált referencia-paletta (dataviz), 4 kategória + kétirányú pár */
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --pos:#2a78d6; --neg:#e34948;
+  --grid:#e1e0d9; --axis:#c3c2b7; --cmuted:#898781;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1216; --panel:#171b21; --ink:#e6e9ee; --muted:#9aa4b2; --line:#2a3039;
+    --accent:#4c8dff; --accent-ink:#0b0e12; --ok:#3fb950; --warn:#d29922; --warn-bg:#2a2210; --bad:#f85149;
+    --chip:#222832; --shadow:none;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --pos:#3987e5; --neg:#e66767;
+    --grid:#2c2c2a; --axis:#383835;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --panel:#171b21; --ink:#e6e9ee; --muted:#9aa4b2; --line:#2a3039;
+  --accent:#4c8dff; --accent-ink:#0b0e12; --ok:#3fb950; --warn:#d29922; --warn-bg:#2a2210; --bad:#f85149;
+  --chip:#222832; --shadow:none;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --pos:#3987e5; --neg:#e66767;
+  --grid:#2c2c2a; --axis:#383835;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.bar{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font-weight:650;font-size:16px;margin-right:auto}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;border:0;color:var(--muted);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--chip);color:var(--ink);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+section[hidden]{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 12px;font-size:17px}
+.card h3{margin:18px 0 8px;font-size:15px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.grid>*,.card{min-width:0}
+.tw{overflow-x:auto;margin:8px 0 12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select.btn{max-width:100%}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);color:var(--ink)}
+.chip{display:inline-block;background:var(--chip);border-radius:999px;padding:2px 10px;font-size:12.5px;margin:2px 4px 2px 0}
+.warn{background:var(--warn-bg);border-left:3px solid var(--warn);padding:8px 12px;border-radius:6px;margin:8px 0;font-size:14px}
+.err{color:var(--bad)} .ok{color:var(--ok)}
+.note{color:var(--muted);font-size:13px;border-left:3px solid var(--line);padding-left:10px}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.progress{height:8px;background:var(--chip);border-radius:99px;overflow:hidden;margin:6px 0 14px}
+.progress>div{height:100%;background:var(--ok);transition:width .3s}
+.check{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:0}
+.check input{margin-top:4px;width:17px;height:17px;accent-color:var(--ok);flex:none}
+.check.done label{color:var(--muted);text-decoration:line-through}
+.check .when{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+ol.steps{padding-left:22px} ol.steps li{margin:6px 0}
+code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:12.5px}
+.report h2{font-size:18px;margin:4px 0 10px} .report h3{font-size:16px;margin:20px 0 6px} .report h4{font-size:14.5px;margin:16px 0 6px}
+.kpi{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.kpi div{background:var(--chip);border-radius:10px;padding:10px 14px;flex:1 1 150px;min-width:0}
+.kpi b{display:block;font-size:18px}
+.theme{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;cursor:pointer;font:inherit}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font:12px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--cmuted)}
+.chart text.val{fill:var(--ink);font-weight:600}
+.chart text.lab{fill:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 0 8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tip{position:fixed;z-index:30;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.15);max-width:280px;display:none}
+.tip b{display:block;margin-bottom:4px}
+.tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--muted);padding:5px 10px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--chip);color:var(--ink);font-weight:600}
+.head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.head h2{margin:0;margin-right:auto}
+.kpi .d{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.up{color:var(--ok)} .down{color:var(--bad)}
+details.tv summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px}
+.form{display:grid;gap:12px 20px;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+.field label{display:block;font-weight:600;font-size:13.5px;margin-bottom:4px}
+.field .h{font-size:12.5px;color:var(--muted);margin-top:3px}
+.field input,.field textarea{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.field input.bad{border-color:var(--bad)}
+.ev{display:flex;gap:6px;align-items:center;margin-bottom:4px} .ev input{width:auto;flex:1 1 0;min-width:0}
+textarea.raw{width:100%;min-height:420px;font:12.5px/1.45 ui-monospace,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+@media (max-width:600px){ .bar{gap:8px} nav button{padding:6px 8px} .card{padding:14px} }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="brand">Állampapír-ajánló <small>helyi, privát felület · 127.0.0.1</small></div>
+  <nav role="tablist">
+    <button role="tab" data-tab="attekintes" aria-selected="true">Áttekintés</button>
+    <button role="tab" data-tab="feltoltes">Feltöltés</button>
+    <button role="tab" data-tab="ajanlo">Ajánló</button>
+    <button role="tab" data-tab="beallitasok">Beállítások</button>
+    <button role="tab" data-tab="utmutato">Útmutató</button>
+  </nav>
+  <button class="theme" id="themeBtn" title="Világos/sötét">◐</button>
+</div></header>
+
+<main>
+<!-- ÁTTEKINTÉS -->
+<section id="attekintes">
+  <div class="card">
+    <h2>Jelenlegi állomány</h2>
+    <p class="muted small" id="hTime"></p>
+    <div class="kpi" id="kpi"></div>
+    <h3>Állampapírok</h3><div class="tw" id="hTable"></div>
+    <h3>Pénz</h3><div class="tw" id="cTable"></div>
+  </div>
+  <div class="card"><h2>Szabályok és feltevések</h2><ul id="rules"></ul>
+    <p class="muted small">Módosítás: a <strong>Beállítások</strong> fülön (vagy a <code>config/strategia.yaml</code> fájlban). Az inflációs feltevést negyedévente érdemes frissíteni az MNB inflációs jelentése alapján.</p></div>
+</section>
+
+<!-- FELTÖLTÉS -->
+<section id="feltoltes" hidden>
+  <div class="card">
+    <h2>1. A WebKincstár portfólió-exportjának feltöltése</h2>
+    <p class="muted small">WebKincstár → Portfólió → Excel export (<code>portfolio.xls</code>). Egyszerre egy fájl. Az ügyfél neve és a számlaszám nem kerül mentésre.</p>
+    <div class="drop" id="drop">Húzd ide a portfolio.xls-t, vagy kattints a kiválasztáshoz<input type="file" id="file" accept=".xls,.xlsx" hidden></div>
+    <p id="stagedList" class="small"></p>
+    <div class="row">
+      <button class="btn primary" id="previewBtn">Előnézet</button>
+      <button class="btn" id="clearBtn">Törlés</button>
+      <span id="upMsg" class="small"></span>
+    </div>
+  </div>
+  <div class="card" id="previewCard" hidden>
+    <h2>2. Ellenőrzés</h2>
+    <div id="previewWarn"></div>
+    <h3>Állampapírok</h3><div class="tw" id="pH"></div>
+    <h3>Pénz</h3><div class="tw" id="pC"></div>
+    <div class="row"><button class="btn primary" id="applyBtn">Import mentése</button>
+      <span class="muted small">Felülírja a holdings.csv és a cash.csv fájlt. A régiek a private/archiv/ mappába kerülnek.</span></div>
+    <p id="applyMsg" class="small"></p>
+  </div>
+</section>
+
+<!-- AJÁNLÓ -->
+<section id="ajanlo" hidden>
+  <div class="card">
+    <div class="row">
+      <button class="btn primary" id="runBtn">Ajánló futtatása</button>
+      <select id="repSel" class="btn" aria-label="Riport"></select>
+      <span id="runMsg" class="small muted">Az aznapi első futás néhány másodperc, mert letölti a kínálatot, a kamatokat és az inflációt.</span>
+    </div>
+  </div>
+  <div class="card report" id="report"><p class="muted">Válassz riportot, vagy futtasd az ajánlót.</p></div>
+</section>
+
+<!-- BEÁLLÍTÁSOK -->
+<section id="beallitasok" hidden>
+  <div class="card">
+    <h2>Beállítások</h2>
+    <p class="muted small">A <code>config/strategia.yaml</code> értékei. Mentéskor a régi változat a <code>config/archiv/</code> mappába kerül. A változás a következő ajánló-futáskor hat.</p>
+    <div id="cfgForm"></div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="cfgSave">Mentés</button>
+      <button class="btn" id="cfgReset">Visszaállítás (mentetlen változások eldobása)</button>
+      <label class="small"><input type="checkbox" id="cfgRun" checked> mentés után futtassa az ajánlót</label></div>
+    <div id="cfgMsg" class="small"></div>
+  </div>
+  <div class="card">
+    <details id="rawBox"><summary><strong>Haladó: nyers YAML</strong> <span class="muted small">(kézi prémium, számla-átnevezés, megjegyzések)</span></summary>
+      <p class="muted small">Mentés előtt a program ellenőrzi a szintaxist és az értékeket. Hibás fájlt nem ment.</p>
+      <textarea class="raw" id="cfgRaw" spellcheck="false"></textarea>
+      <div class="row"><button class="btn primary" id="rawSave">YAML mentése</button></div>
+      <div id="rawMsg" class="small"></div>
+    </details>
+  </div>
+</section>
+
+<!-- ÚTMUTATÓ -->
+<section id="utmutato" hidden>
+  <div class="card">
+    <h2>Negyedéves menet</h2>
+    <p class="muted small">Időpont: a negyedév első hete, és a nagyobb kamatfordulók vagy lejáratok előtti napok.</p>
+    <ol class="steps">
+      <li><strong>Export:</strong> WebKincstár → Portfólió → Excel (<code>portfolio.xls</code>).</li>
+      <li><strong>Feltöltés</strong> fül: húzd be, nézd meg az <em>Előnézetet</em> (sorozatok, névértékek, pénz), majd <em>Import mentése</em>.</li>
+      <li><strong>Ajánló</strong> fül: <em>Ajánló futtatása</em>. A riport a <code>private/reports/</code> mappába kerül.</li>
+      <li><strong>Átnézés:</strong>
+        <ul>
+          <li><em>Javasolt lépések</em>: a mai dátumúak most aktuálisak, a későbbiek tervek.</li>
+          <li><em>Kamatpályák</em>: a vetített kamatok a feltevéseken múlnak. Ha az infláció vagy a DKJ-hozam másképp alakul, változik az ajánlás is.</li>
+          <li><em>Most kapható papírok</em>: a likviditás is számít, nem csak a kamat. A MÁP Plusz évente egyszer 100%-on visszaváltható.</li>
+        </ul></li>
+      <li><strong>Kötés a WebKincstárban:</strong>
+        <ul>
+          <li><em>Csere</em> = visszaváltás (nettó 99% + felhalmozott kamat), majd az összeg jóváírása után vétel.</li>
+          <li><em>Vétel</em>: a papír a névérték plusz a felhalmozott kamat áráért vehető. A felhalmozott kamatot a következő kamatfizetéskor visszakapod.</li>
+        </ul></li>
+      <li><strong>Utána:</strong> új export és import, így a következő futás pontos állapotból indul.</li>
+    </ol>
+  </div>
+  <div class="grid">
+    <div class="card"><h2>Hogyan számol?</h2><ul class="small">
+      <li><strong>Kamatpálya:</strong> a múltbeli és a folyó periódus kamata ismert (ÁKK lakossági kamattábla). A jövőbelieket a program vetíti:
+        PMÁP = előző évi KSH-infláció + prémium; PEMÁP = előző évi euróövezeti HICP + prémium; BMÁP = 3 havi DKJ + prémium;
+        EMÁP = 3 havi EURIBOR; Fix és MÁP Plusz = az ajánlattételben rögzített kamat.</li>
+      <li><strong>Várható átlagkamat:</strong> a periódusok időarányos átlaga a horizonton (3 év, vagy a lejáratig).</li>
+      <li><strong>Csere:</strong> a tartott papír és a legjobb kapható papír különbsége, mínusz az 1% visszaváltási költség. Ha a folyó periódus kamata jobb, a program a kamatfordulóig vár.</li>
+    </ul></div>
+    <div class="card"><h2>Termékek röviden (2026-10)</h2><ul class="small">
+      <li><strong>Fix MÁP:</strong> 3 év, fix kamat, negyedéves kamatfizetés. Akkor jó, ha a kamatok esnek.</li>
+      <li><strong>MÁP Plusz:</strong> 5 év, emelkedő sávos kamat. A kamat papírban jóváíródik, évente 100%-on visszaváltható.</li>
+      <li><strong>PMÁP:</strong> infláció + prémium. Most kicsi a prémium (0,10%), és a 2026-os alacsony infláció miatt 2027-ben alacsony a kamat.</li>
+      <li><strong>BMÁP:</strong> 3 havi DKJ-hozam + prémium, negyedévente fordul. Ha a jegybanki kamat csökken, a kamata is esik.</li>
+      <li><strong>EMÁP:</strong> euróban, 3 havi EURIBOR. A PEMÁP-ot már nem bocsátják ki.</li>
+      <li>A 2019-06-01 után vett lakossági állampapírok kamata adómentes. Az EUR-papírokat EUR-ból érdemes venni, váltás nélkül.</li>
+    </ul></div>
+  </div>
+
+  <div class="card report">
+    <details><summary><strong>Technikai információk: adatforrások, fájlok, működés</strong></summary>
+
+    <h3>Adatforrások</h3>
+    <p class="muted small">A <code>scripts/allampapir_adatok.py</code> tölti le, naponta egyszer. A napi gyorsítótár: <code>data/allampapir/adatok_ÉÉÉÉ-HH-NN.json</code>. A „Ajánló futtatása” az aznapi gyorsítótárat használja; parancssorból <code>--frissit</code> kapcsolóval újratölthető.</p>
+    <div class="tw"><table><thead><tr><th>forrás</th><th>lekérdezés</th><th>mit ad</th></tr></thead><tbody>
+      <tr><td>allampapir.hu (ÁKK)</td><td><code>GET /api/csrf</code></td><td>biztonsági token; a többi kérés <code>POST</code>, <code>X-CSRF-TOKEN</code> fejléccel</td></tr>
+      <tr><td></td><td><code>/api/paper/all_with_meta</code></td><td>terméklista (aktív és megszűnt)</td></tr>
+      <tr><td></td><td><code>/api/retailInterest/get_all_data</code></td><td>minden lakossági sorozat minden kamatperiódusa (kb. 2000-től), és hogy mi kapható most (<code>underIssue</code>); az oldal „Lakossági kamatok” táblája</td></tr>
+      <tr><td></td><td><code>/api/networkRate/get_prices</code></td><td>a Kincstár napi vételi és eladási árfolyamai (MAP, MAPP, DKJ, EMAP fülek); innen a nettó 99%-os visszaváltás</td></tr>
+      <tr><td></td><td><code>/api/paper/details</code> → <code>/api/paper/get_files</code></td><td>a futó sorozatok nyilvános ajánlattétele (PDF) → kamatprémium, első periódus kamata, MÁP Plusz sávos kamatai (pypdf)</td></tr>
+      <tr><td>KSH STADAT</td><td><code>ara0040.html</code></td><td>havi fogyasztói árindex és az év eleje óta számolt átlag → PMÁP-kamat; böngésző-fejléc kell, a CSV-t a KSH tűzfala elutasítja</td></tr>
+      <tr><td>Eurostat</td><td><code>prc_hicp_aind</code></td><td>euróövezeti éves átlaginfláció → PEMÁP-kamat (a folyó évre a Beállításokban megadott feltevés)</td></tr>
+      <tr><td>ECB Data Portal</td><td><code>FM/M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA</code></td><td>3 havi EURIBOR havi átlaga → EMÁP-kamat</td></tr>
+      <tr><td></td><td><code>EXR/D.HUF.EUR.SP00.A</code></td><td>EUR/HUF referenciaárfolyam</td></tr>
+      <tr><td>saját portfólió</td><td>WebKincstár <code>portfolio.xls</code></td><td>feltöltve, helyben marad; név és számlaszám nem kerül mentésre</td></tr>
+    </tbody></table></div>
+    <ul class="small">
+      <li><strong>Kockázat:</strong> az allampapir.hu adatszolgáltatása nem hivatalos, nyilvános felület, hanem az oldal belső működése. Ha az ÁKK átépíti az oldalt, a letöltés elromolhat. Ilyenkor a program a legutóbbi letöltött adattal fut tovább, és a riport figyelmeztet.</li>
+    </ul>
+
+    <h3>Fájlok</h3>
+    <div class="tw"><table><thead><tr><th>fájl</th><th>szerep</th></tr></thead><tbody>
+      <tr><td><code>config/strategia.yaml</code></td><td>szabályok és feltevések (Beállítások fül); régi változatok: <code>config/archiv/</code></td></tr>
+      <tr><td><code>scripts/allampapir_adatok.py</code></td><td>adatletöltés</td></tr>
+      <tr><td><code>scripts/mak_portfolio_import.py</code></td><td>a WebKincstár-export beolvasása</td></tr>
+      <tr><td><code>scripts/negyedeves_ajanlo.py</code></td><td>az ajánló (kamatvetítés, csere, devizaarány, riport)</td></tr>
+      <tr><td><code>scripts/config_kezelo.py</code></td><td>a config ellenőrzése és mentése</td></tr>
+      <tr><td><code>data/allampapir/ismert.json</code></td><td>az ismert termékek és sorozatok nyilvántartása (újdonság-figyelés)</td></tr>
+      <tr><td><code>private/holdings.csv</code>, <code>cash.csv</code></td><td>a mostani állomány (BIZALMAS); régiek: <code>private/archiv/</code>, pillanatképek: <code>private/snapshots/</code></td></tr>
+      <tr><td><code>private/reports/ajanlo_ÉÉÉÉ-QN.md</code></td><td>a riportok (BIZALMAS)</td></tr>
+      <tr><td><code>docs/01_…</code>, <code>docs/02_…</code></td><td>részletes leírás: kínálat, kamatképletek, adatforrások, modell, korlátok</td></tr>
+    </tbody></table></div>
+
+    <h3>Működés</h3>
+    <ul class="small">
+      <li>Ez a felület csak a 127.0.0.1:8766 címen érhető el. Minden módosító kéréshez az indításkor generált token kell, és a szerver a Host-fejlécet is ellenőrzi.</li>
+      <li>Parancssorból: <code>python scripts/mak_portfolio_import.py portfolio.xls</code>, majd <code>python scripts/negyedeves_ajanlo.py [--frissit]</code>.</li>
+      <li>A kód módosítása után a felületet újra kell indítani (a <code>start_webapp.bat</code> ablakának bezárása, majd újraindítás).</li>
+    </ul>
+    </details>
+  </div>
+</section>
+</main>
+
+<script>
+const TOKEN = "__TOKEN__";
+const $ = s => document.querySelector(s);
+const fmt = (v, d=2) => (v===null||v===undefined||Number.isNaN(v)) ? "–" : Number(v).toLocaleString("hu-HU",{minimumFractionDigits:0,maximumFractionDigits:d});
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let S = null;
+
+async function api(path, opt={}) {
+  const o = Object.assign({}, opt);
+  if (o.method === "POST") o.headers = Object.assign({"X-Token": TOKEN}, o.headers||{});
+  const r = await fetch(path, o);
+  const j = await r.json().catch(() => ({hiba: "Hibás válasz (" + r.status + ")"}));
+  if (!r.ok || j.hiba) throw new Error(j.hiba || r.status);
+  return j;
+}
+
+function table(rows, cols) {
+  if (!rows || !rows.length) return '<p class="muted small">Nincs adat.</p>';
+  return "<table><thead><tr>" + cols.map(c => `<th class="${c.num?"num":""}">${c.t}</th>`).join("") + "</tr></thead><tbody>" +
+    rows.map(r => "<tr>" + cols.map(c => `<td class="${c.num?"num":""}">${c.num ? fmt(r[c.k], c.d) : esc(r[c.k])}</td>`).join("") + "</tr>").join("") +
+    "</tbody></table>";
+}
+const HCOLS = [{k:"tipus",t:"típus"},{k:"sorozat",t:"sorozat"},{k:"ccy",t:"dev."},{k:"nevertek",t:"névérték",num:1,d:0},
+  {k:"arfolyam_pct",t:"árfolyam %",num:1,d:4},{k:"piaci_ertek_huf",t:"piaci érték Ft",num:1,d:0},{k:"kov_datum",t:"következő esemény"},{k:"kov_tipus",t:"típusa"}];
+const CCOLS = [{k:"account",t:"számla"},{k:"ccy",t:"deviza"},{k:"amount",t:"összeg",num:1},{k:"huf",t:"Ft-ban",num:1,d:0}];
+
+function renderOverview() {
+  $("#hTime").textContent = S.holdings_ido ? "Utolsó import: " + S.holdings_ido : "Még nincs import.";
+  $("#hTable").innerHTML = table(S.holdings, HCOLS);
+  $("#cTable").innerHTML = table(S.cash, CCOLS);
+  const sum = (a, f) => a.filter(f).reduce((s, x) => s + (x.piaci_ertek_huf ?? x.huf ?? 0), 0);
+  const huf = sum(S.holdings, h => h.ccy === "HUF"), eur = sum(S.holdings, h => h.ccy === "EUR"), cash = sum(S.cash, () => true);
+  const tot = huf + eur + cash;
+  $("#kpi").innerHTML = [["összesen", tot], ["HUF-papír", huf], ["EUR-papír (Ft-ban)", eur], ["pénz", cash]]
+    .map(([n, v]) => `<div><span class="muted small">${n}</span><b>${fmt(v, 0)} Ft</b>${n !== "összesen" && tot ? `<span class="d">${fmt(v / tot * 100, 1)}%</span>` : ""}</div>`).join("");
+  $("#rules").innerHTML = S.rules.map(r => `<li>${esc(r)}</li>`).join("");
+}
+function renderStaged() {
+  $("#stagedList").innerHTML = S.staged.length ? "Feltöltve: " + S.staged.map(n => `<span class="chip">${esc(n)}</span>`).join("") : '<span class="muted">Nincs feltöltött fájl.</span>';
+}
+function renderReports(selectId) {
+  const sel = $("#repSel");
+  sel.innerHTML = S.reports.length ? S.reports.map(r => `<option value="${esc(r.id)}">${esc(r.nev)} · ${esc(r.ido)}</option>`).join("") : "<option>nincs riport</option>";
+  if (selectId) sel.value = selectId;
+}
+async function load() {
+  S = await api("/api/state");
+  renderOverview(); renderStaged(); renderReports();
+  if (S.reports.length) showReport(S.reports[0].id);
+}
+async function showReport(id) {
+  try { const r = await api("/api/report?id=" + encodeURIComponent(id)); $("#report").innerHTML = r.html; $("#repSel").value = id; }
+  catch (e) { $("#report").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+
+// fülek
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("main > section").forEach(s => s.hidden = s.id !== b.dataset.tab);
+  try { localStorage.setItem("tab", b.dataset.tab); } catch (e) {}
+});
+try { const t = location.hash.slice(1) || localStorage.getItem("tab"); if (t) document.querySelector(`nav button[data-tab="${CSS.escape(t)}"]`)?.click(); } catch (e) {}
+
+// téma
+$("#themeBtn").onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("theme", next); } catch (e) {}
+};
+try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+// feltöltés
+const drop = $("#drop"), file = $("#file");
+drop.onclick = () => file.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); upload(e.dataTransfer.files); };
+file.onchange = () => { upload(file.files); file.value = ""; };
+async function upload(files) {
+  $("#upMsg").textContent = "";
+  const f = files[0]; if (!f) return;
+  try { const r = await api("/api/upload", {method:"POST", headers:{"X-Filename": encodeURIComponent(f.name)}, body: f}); S.staged = r.staged; }
+  catch (e) { $("#upMsg").innerHTML = `<span class="err">${esc(f.name)}: ${esc(e.message)}</span>`; }
+  renderStaged(); $("#previewCard").hidden = true;
+}
+$("#clearBtn").onclick = async () => { const r = await api("/api/upload/clear", {method:"POST"}); S.staged = r.staged; renderStaged(); $("#previewCard").hidden = true; };
+$("#previewBtn").onclick = async () => {
+  const b = $("#previewBtn"); b.disabled = true; $("#upMsg").innerHTML = '<span class="spin"></span>';
+  try {
+    const r = await api("/api/import/preview", {method:"POST"});
+    $("#pH").innerHTML = table(r.holdings, HCOLS); $("#pC").innerHTML = table(r.cash, CCOLS);
+    $("#previewWarn").innerHTML = r.warnings.map(w => `<div class="warn">⚠️ ${esc(w)}</div>`).join("");
+    $("#previewCard").hidden = false; $("#applyMsg").textContent = ""; $("#upMsg").textContent = "";
+  } catch (e) { $("#upMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+  b.disabled = false;
+};
+$("#applyBtn").onclick = async () => {
+  if (!confirm("Felülírod a jelenlegi állományt az előnézet szerint?")) return;
+  try { const r = await api("/api/import/apply", {method:"POST"}); $("#applyMsg").innerHTML = `<span class="ok">${esc(r.uzenet)}</span>`; await load(); }
+  catch (e) { $("#applyMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+};
+
+// ajánló
+$("#repSel").onchange = e => showReport(e.target.value);
+$("#runBtn").onclick = async () => {
+  const b = $("#runBtn"); b.disabled = true; $("#runMsg").innerHTML = '<span class="row"><span class="spin"></span> fut…</span>';
+  try {
+    const r = await api("/api/run", {method:"POST"});
+    S = await api("/api/state"); renderReports(r.id); $("#report").innerHTML = r.html;
+    $("#runMsg").innerHTML = '<span class="ok">Kész, a riport elmentve.</span>';
+  } catch (e) { $("#runMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+  b.disabled = false;
+};
+
+// beállítások
+let CFG = null;
+async function loadCfg() {
+  CFG = await api("/api/config");
+  const groups = {};
+  CFG.mezok.forEach(m => (groups[m.csoport] = groups[m.csoport] || []).push(m));
+  $("#cfgForm").innerHTML = Object.entries(groups).map(([g, ms]) => `<h3>${esc(g)}</h3><div class="form">` + ms.map(fieldHtml).join("") + "</div>").join("");
+  $("#cfgRaw").value = CFG.raw; $("#cfgMsg").textContent = ""; $("#rawMsg").textContent = "";
+}
+function fieldHtml(m) {
+  const id = "f_" + m.path.replace(/\W/g, "_");
+  let inp;
+  if (m.type === "evmap") {
+    const rows = Object.entries(m.value || {}).map(([k, v]) => evRow(k, v)).join("");
+    inp = `<div data-path="${esc(m.path)}" data-type="evmap">${rows}</div><button class="btn small" type="button" data-addev="${esc(m.path)}">+ év</button>`;
+  } else {
+    const v = m.type === "list" ? (m.value || []).join(", ") : (m.value ?? "");
+    inp = `<input id="${id}" data-path="${esc(m.path)}" data-type="${m.type}" value="${esc(v)}" ${m.type.startsWith("num") ? 'inputmode="decimal"' : ""}>`;
+  }
+  return `<div class="field"><label for="${id}">${esc(m.label)}</label>${inp}${m.help ? `<div class="h">${esc(m.help)}</div>` : ""}</div>`;
+}
+function evRow(k, v) {
+  return `<div class="ev"><input class="k" value="${esc(k)}" aria-label="év" placeholder="év vagy alap"><input class="v" value="${esc(v ?? "")}" aria-label="érték" placeholder="üres = KSH / letöltött">
+    <button class="btn" type="button" data-delev title="Sor törlése">✕</button></div>`;
+}
+$("#cfgForm").onclick = e => {
+  if (e.target.dataset.addev !== undefined) e.target.previousElementSibling.insertAdjacentHTML("beforeend", evRow("", ""));
+  if (e.target.dataset.delev !== undefined) e.target.closest(".ev").remove();
+};
+function collectCfg() {
+  const out = {};
+  document.querySelectorAll("#cfgForm [data-path]").forEach(el => {
+    if (el.dataset.type === "evmap") {
+      const o = {}; el.querySelectorAll(".ev").forEach(r => { const k = r.querySelector(".k").value.trim(); if (k) o[k] = r.querySelector(".v").value.trim(); });
+      out[el.dataset.path] = o;
+    } else out[el.dataset.path] = el.value;
+  });
+  return out;
+}
+async function afterSave(r, msgSel) {
+  if (!r.ok) { $(msgSel).innerHTML = r.hibak.map(h => `<div class="warn">⚠️ ${esc(h)}</div>`).join(""); return; }
+  $(msgSel).innerHTML = `<span class="ok">Mentve. A régi változat: config/archiv/${esc(r.archiv)}</span>`;
+  await loadCfg(); S = await api("/api/state"); renderOverview();
+  if ($("#cfgRun").checked) { document.querySelector('nav button[data-tab="ajanlo"]').click(); $("#runBtn").click(); }
+}
+$("#cfgSave").onclick = async () => {
+  try { await afterSave(await api("/api/config", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ertekek: collectCfg()})}), "#cfgMsg"); }
+  catch (e) { $("#cfgMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+};
+$("#cfgReset").onclick = () => loadCfg();
+$("#rawSave").onclick = async () => {
+  try { await afterSave(await api("/api/config/raw", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text: $("#cfgRaw").value})}), "#rawMsg"); }
+  catch (e) { $("#rawMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+};
+loadCfg().catch(e => $("#cfgMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`);
+
+load().catch(e => document.querySelector("main").insertAdjacentHTML("afterbegin", `<div class="warn">${esc(e.message)}</div>`));
+</script>
+</body>
+</html>

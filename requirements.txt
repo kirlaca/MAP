@@ -1,0 +1,7 @@
+pandas>=2.0
+PyYAML>=6.0
+requests>=2.28
+xlrd>=2.0
+openpyxl>=3.1
+lxml>=4.9
+pypdf>=4.0

@@ -1,0 +1,50 @@
+# Negyedéves állampapír-ajánló – szabályok és feltevések
+# A hozamok mind évi %-ban, a kamatadó-mentes (2019. 06. 01. utáni) lakossági papírokra.
+# A webfelület Beállítások fülén is szerkeszthető (mentéskor a régi változat a config/archiv/ mappába kerül).
+
+horizont_ev: 3            # ennyi évre (vagy a lejáratig, ha az korábbi) hasonlítja a várható átlagkamatot
+
+# Mit NEM vehet az ajánló? Minden más, éppen kapható papírt vizsgál, egy új terméktípust is (azt a mostani
+# kamatával, amíg a kamatképletét be nem építjük). Típusnevek a lakossági kamattáblából.
+kizart_tipusok: [BABA, KTJ I, KTJ II, nyomdai MÁP Plusz]
+
+# Devizaarány: az EUR-papírok és az EUR-pénz aránya a teljes portfólióban (Ft-ban mérve).
+# A sávon kívül a szabad pénzt és a lejáró összegeket a program a másik devizába irányítja. Papírt emiatt nem ad el.
+deviza:
+  cel_eur_arany: 15       # %
+  sav_pp: 5               # ± pont: ezen belül nincs teendő
+  valtas_koltseg_pct: 0.5 # feltevés: banki árfolyamrés (a Kincstár nem vált; bankszámlán kell váltani)
+
+# Kincstári visszaváltás lejárat előtt: nettó árfolyam %-ban (+ felhalmozott kamat).
+# Forrás: kincstári árfolyamjegyzés (allampapir.hu), 2026-10: minden sorozat 99,00%.
+# MÁP Plusz: a kamatjuttatás utáni 5 munkanapban 100%.
+visszavaltas:
+  alap: 99.0
+  MAP_Plusz_ablakban: 100.0
+
+# Infláció-feltevések a PMÁP (KSH-fogyasztóiár-index) és a PEMÁP (euróövezeti HICP) kamatának vetítéséhez.
+# A lezárt évek tényadatait a program letölti (KSH, Eurostat). Folyó év: null = a KSH év eleje óta mért átlaga.
+# A jövő évekre itt kell feltevést adni; frissítsd negyedévente az MNB inflációs jelentése alapján.
+inflacio:
+  HUF: {2026: null, 2027: 3.0, alap: 3.0}
+  EUR: {2026: 2.0, 2027: 2.0, alap: 2.0}
+
+# Változó kamatok vetítése. null = a mostani szint marad (nincs kamatpálya-feltevés).
+dkj_3h: null              # BMÁP kamatbázisa (3 hónapos DKJ aukciós átlaghozam), %
+euribor_3h: null          # EMÁP kamata; null = az ECB legutóbbi havi átlaga
+
+# Kamatprémium kézi megadása, ha a program nem tudja kiszámolni ("típus sorozat": %)
+premium_kezi: {}
+
+csere:
+  min_elony_pp: 0.5       # csere csak akkor, ha a horizonton a várható többlethozam a visszaváltási
+                          # költség után évesítve legalább ennyi százalékpont
+
+tartalek:                 # ennyi készpénz marad befektetetlenül a kincstári számlán
+  HUF: 100000
+  EUR: 0
+
+min_vasarlas: {HUF: 10000, EUR: 50}
+
+# A számla-azonosítók (holdings.csv / cash.csv "account") átnevezése importkor, pl. {tbsz: tbsz2026}
+szamla_atnevezes: {}

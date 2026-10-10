@@ -1,0 +1,10 @@
+# Személyes adatok – SOHA nem kerülhetnek gitbe
+private/*
+!private/README.md
+# letöltött adatok és futás közben keletkező fájlok
+data/allampapir/*
+!data/allampapir/.gitkeep
+config/archiv/
+__pycache__/
+*.pyc
+.venv/
