@@ -135,3 +135,7 @@ data/           letöltött adatok gyorsítótára – NEM kerül gitbe
 - A jövőbeli lépések a mai kínálattal számolnak. Negyedévente újra kell futtatni.
 - Egy új terméktípust a program a mostani kamatával számol, amíg a kamatképletét be nem építik (`ISMERT_TIPUSOK`, `build()`).
 - A WebKincstár XLS-formátumának változása az importer javítását igényelheti.
+
+## Licenc
+
+[MIT](LICENSE). A program „ahogy van” alapon, mindennemű garancia nélkül használható. Nem befektetési tanácsadás: a döntésekért és a kötésekért a felhasználó felel.
