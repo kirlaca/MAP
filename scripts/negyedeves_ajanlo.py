@@ -441,8 +441,15 @@ def run(cfg: dict, holdings: Path, cash_file: Path, frissit: bool = False, log=p
     # ---- összefoglaló ----
     w(f"# Negyedéves állampapír-ajánló, {q} ({today:%Y-%m-%d})")
     w("")
-    w("> BIZALMAS: portfólióadatokat tartalmaz. Ez modellszámítás, nem befektetési tanácsadás. Kötés előtt nézd meg "
-      "a WebKincstárban az aktuális kínálatot és árfolyamot.")
+    meta_f = holdings.parent / "portfolio_meta.json"
+    if meta_f.exists() and json.loads(meta_f.read_text(encoding="utf-8")).get("minta"):
+        import mak_portfolio_import as imp
+        w(f"> ⚠️ **{imp.MINTA_CIM.upper()}**: {imp.MINTA_SZOVEG} A saját portfóliód betöltése:")
+        for i, lepes in enumerate(imp.MINTA_LEPESEK, 1):
+            w(f"> {i}. {lepes}")
+    else:
+        w("> BIZALMAS: portfólióadatokat tartalmaz. Ez modellszámítás, nem befektetési tanácsadás. Kötés előtt nézd meg "
+          "a WebKincstárban az aktuális kínálatot és árfolyamot.")
     w("")
     w("## Összefoglaló")
     huf_papir = float(h.loc[h["ccy"] == "HUF", "piaci_ertek_huf"].sum())

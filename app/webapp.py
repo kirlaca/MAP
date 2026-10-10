@@ -152,6 +152,8 @@ def state() -> dict:
         "holdings": df_rows(h.drop(columns=["nev"], errors="ignore")), "cash": df_rows(c),
         "holdings_ido": f"{dt.datetime.fromtimestamp(hm):%Y-%m-%d %H:%M}" if hm else None,
         "staged": staged(), "reports": reports_list(), "rules": rules_summary(load_cfg()),
+        "minta": bool(imp.meta().get("minta")) and not h.empty,
+        "minta_info": {"cim": imp.MINTA_CIM, "szoveg": imp.MINTA_SZOVEG, "lepesek": imp.MINTA_LEPESEK},
     }
 
 
@@ -160,7 +162,8 @@ def preview() -> dict:
     if len(xs) != 1:
         raise ValueError("Pontosan egy portfolio.xls-t tölts fel." if xs else "Nincs feltöltött XLS.")
     h, c, warn = imp.read_xls(xs[0], load_cfg().get("szamla_atnevezes"))
-    return {"holdings": df_rows(h.drop(columns=["nev"])), "cash": df_rows(c), "warnings": warn}
+    return {"holdings": df_rows(h.drop(columns=["nev"])), "cash": df_rows(c), "warnings": warn,
+            "minta": imp.minta_e(xs[0])}
 
 
 def apply_import() -> dict:
@@ -168,7 +171,7 @@ def apply_import() -> dict:
     if len(xs) != 1:
         raise ValueError("Pontosan egy portfolio.xls-t tölts fel.")
     h, c, warn = imp.read_xls(xs[0], load_cfg().get("szamla_atnevezes"))
-    sp = imp.save(h, c, imp.snapshot(h, c, xs[0].name))
+    sp = imp.save(h, c, imp.snapshot(h, c, xs[0].name), imp.minta_e(xs[0]))
     dest = PRIV / f"exports/{dt.datetime.now():%Y-%m-%d_%H%M%S}"
     dest.mkdir(parents=True, exist_ok=True)
     shutil.move(str(xs[0]), dest / xs[0].name)

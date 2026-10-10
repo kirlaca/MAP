@@ -62,6 +62,8 @@ select.btn{max-width:100%}
 .chip{display:inline-block;background:var(--chip);border-radius:999px;padding:2px 10px;font-size:12.5px;margin:2px 4px 2px 0}
 .warn{background:var(--warn-bg);border-left:3px solid var(--warn);padding:8px 12px;border-radius:6px;margin:8px 0;font-size:14px}
 .err{color:var(--bad)} .ok{color:var(--ok)}
+.minta{background:var(--warn-bg);border:1px solid var(--warn);border-left-width:4px;border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.minta b{display:block;font-size:16px;margin-bottom:4px;color:var(--warn)} .minta ol{margin:6px 0 0;padding-left:22px} .minta li{margin:2px 0}
 .note{color:var(--muted);font-size:13px;border-left:3px solid var(--line);padding-left:10px}
 .spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
@@ -122,6 +124,7 @@ textarea.raw{width:100%;min-height:420px;font:12.5px/1.45 ui-monospace,Consolas,
 </div></header>
 
 <main>
+<div id="mintaBox" class="minta" role="alert" hidden></div>
 <!-- ÁTTEKINTÉS -->
 <section id="attekintes">
   <div class="card">
@@ -304,6 +307,15 @@ const HCOLS = [{k:"tipus",t:"típus"},{k:"sorozat",t:"sorozat"},{k:"ccy",t:"dev.
   {k:"arfolyam_pct",t:"árfolyam %",num:1,d:4},{k:"piaci_ertek_huf",t:"piaci érték Ft",num:1,d:0},{k:"kov_datum",t:"következő esemény"},{k:"kov_tipus",t:"típusa"}];
 const CCOLS = [{k:"account",t:"számla"},{k:"ccy",t:"deviza"},{k:"amount",t:"összeg",num:1},{k:"huf",t:"Ft-ban",num:1,d:0}];
 
+function mintaHtml(m, preview) {
+  return `<b>⚠️ ${esc(m.cim)}${preview ? " – ezt készülsz importálni" : ""}</b><div>${esc(m.szoveg)}</div>` +
+    (preview ? "" : `<div style="margin-top:6px"><strong>A saját portfóliód betöltése:</strong></div><ol>${m.lepesek.map(l => `<li>${esc(l)}</li>`).join("")}</ol>`);
+}
+function renderMinta() {
+  const box = $("#mintaBox"), tab = document.querySelector('nav button[aria-selected="true"]')?.dataset.tab;
+  box.hidden = !(S && S.minta && ["attekintes", "ajanlo", "feltoltes"].includes(tab));
+  if (!box.hidden) box.innerHTML = mintaHtml(S.minta_info, false);
+}
 function renderOverview() {
   $("#hTime").textContent = S.holdings_ido ? "Utolsó import: " + S.holdings_ido : "Még nincs import.";
   $("#hTable").innerHTML = table(S.holdings, HCOLS);
@@ -314,6 +326,7 @@ function renderOverview() {
   $("#kpi").innerHTML = [["összesen", tot], ["HUF-papír", huf], ["EUR-papír (Ft-ban)", eur], ["pénz", cash]]
     .map(([n, v]) => `<div><span class="muted small">${n}</span><b>${fmt(v, 0)} Ft</b>${n !== "összesen" && tot ? `<span class="d">${fmt(v / tot * 100, 1)}%</span>` : ""}</div>`).join("");
   $("#rules").innerHTML = S.rules.map(r => `<li>${esc(r)}</li>`).join("");
+  renderMinta();
 }
 function renderStaged() {
   $("#stagedList").innerHTML = S.staged.length ? "Feltöltve: " + S.staged.map(n => `<span class="chip">${esc(n)}</span>`).join("") : '<span class="muted">Nincs feltöltött fájl.</span>';
@@ -338,6 +351,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b));
   document.querySelectorAll("main > section").forEach(s => s.hidden = s.id !== b.dataset.tab);
   try { localStorage.setItem("tab", b.dataset.tab); } catch (e) {}
+  renderMinta();
 });
 try { const t = location.hash.slice(1) || localStorage.getItem("tab"); if (t) document.querySelector(`nav button[data-tab="${CSS.escape(t)}"]`)?.click(); } catch (e) {}
 
@@ -369,7 +383,8 @@ $("#previewBtn").onclick = async () => {
   try {
     const r = await api("/api/import/preview", {method:"POST"});
     $("#pH").innerHTML = table(r.holdings, HCOLS); $("#pC").innerHTML = table(r.cash, CCOLS);
-    $("#previewWarn").innerHTML = r.warnings.map(w => `<div class="warn">⚠️ ${esc(w)}</div>`).join("");
+    $("#previewWarn").innerHTML = (r.minta ? `<div class="minta">${mintaHtml(S.minta_info, true)}</div>` : "") +
+      r.warnings.map(w => `<div class="warn">⚠️ ${esc(w)}</div>`).join("");
     $("#previewCard").hidden = false; $("#applyMsg").textContent = ""; $("#upMsg").textContent = "";
   } catch (e) { $("#upMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
   b.disabled = false;

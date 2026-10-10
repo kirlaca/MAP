@@ -42,6 +42,18 @@ TIPUSOK = [
     ("Babakötvény", "BABA", "_BABA"),
 ]
 PENZ = {"EURO": "EUR", "MAGYAR FORINT": "HUF", "USA DOLLÁR": "USD", "AMERIKAI DOLLÁR": "USD", "SVÁJCI FRANK": "CHF"}
+# A minta-portfólió (minta/portfolio_minta.xls) kitalált ügyfele; ha ez van betöltve, a felület és a riport figyelmeztet.
+MINTA_JEL = ("Minta Ügyfél", "(00000000)")
+META = PRIV / "portfolio_meta.json"
+MINTA_CIM = "Minta portfólió"
+MINTA_SZOVEG = ("Ez a kitalált minta-portfólió (minta/portfolio_minta.xls), nem a te állományod: a számok és a javaslatok "
+                "csak a program bemutatására szolgálnak.")
+MINTA_LEPESEK = [
+    "Lépj be a WebKincstárba (https://webkincstar.allamkincstar.gov.hu).",
+    "A portfólió (állomány) oldalon töltsd le az Excel-exportot: portfolio.xls.",
+    "Itt a Feltöltés fülön húzd be a fájlt, nézd meg az Előnézetet, majd nyomd meg az Import mentése gombot.",
+    "Az Ajánló fülön futtasd az ajánlót. Az exportod csak ezen a gépen, a private/ mappában marad.",
+]
 HOLD_COLS = ["account", "tipus", "sorozat", "nev", "ccy", "nevertek", "arfolyam_pct", "piaci_ertek_huf",
              "kov_datum", "kov_tipus"]
 
@@ -75,6 +87,18 @@ def account_of(technikai: str, cfg_map: dict | None = None) -> str:
     t = technikai.lower()
     acc = "tbsz" if "tbsz" in t or "tartós" in t else "kincstar"
     return (cfg_map or {}).get(acc, acc)
+
+
+def minta_e(path: Path) -> bool:
+    """A minta-export-e (a kitalált ügyfél / számlaszám alapján)?"""
+    raw = pd.read_excel(path, header=0, dtype=object)
+    szoveg = " ".join(str(v) for col in raw.columns[:2] for v in raw[col].dropna().unique())
+    return any(j in szoveg for j in MINTA_JEL)
+
+
+def meta() -> dict:
+    """A betöltött állomány metaadata (forrásfájl, minta-e); üres, ha még nem volt import."""
+    return json.loads(META.read_text(encoding="utf-8")) if META.exists() else {}
 
 
 def read_xls(path: Path, cfg_map: dict | None = None) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
@@ -124,7 +148,7 @@ def snapshot(h: pd.DataFrame, c: pd.DataFrame, src: str) -> dict:
             "cash": json.loads(c.to_json(orient="records", force_ascii=False))}
 
 
-def save(h: pd.DataFrame, c: pd.DataFrame, snap: dict) -> Path:
+def save(h: pd.DataFrame, c: pd.DataFrame, snap: dict, minta: bool = False) -> Path:
     stamp = f"{dt.datetime.now():%Y%m%d-%H%M%S}"
     (PRIV / "archiv").mkdir(parents=True, exist_ok=True)
     for name in ("holdings.csv", "cash.csv"):
@@ -135,6 +159,8 @@ def save(h: pd.DataFrame, c: pd.DataFrame, snap: dict) -> Path:
     (PRIV / "snapshots").mkdir(parents=True, exist_ok=True)
     sp = PRIV / "snapshots" / f"{dt.datetime.now():%Y-%m-%d_%H%M%S}.json"
     sp.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+    META.write_text(json.dumps({"forras": snap.get("forras"), "ido": snap.get("ido"), "minta": minta},
+                               ensure_ascii=False, indent=1), encoding="utf-8")
     return sp
 
 
@@ -150,9 +176,12 @@ def main() -> None:
     for w in warn:
         print("FIGYELEM:", w)
     snap = snapshot(h, c, a.xls.name)
+    minta = minta_e(a.xls)
+    if minta:
+        print(f"FIGYELEM: {MINTA_CIM}. {MINTA_SZOVEG}")
     print(f"Összesen: papír {snap['papir_huf']:,.0f} Ft + pénz {snap['penz_huf']:,.0f} Ft; EUR/HUF (exportból) {snap['eurhuf']}")
     if not a.proba:
-        print("Mentve, pillanatkép:", save(h, c, snap).name)
+        print("Mentve, pillanatkép:", save(h, c, snap, minta).name)
 
 
 if __name__ == "__main__":

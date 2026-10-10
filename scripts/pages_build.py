@@ -71,6 +71,11 @@ def build(frissit: bool) -> Path:
   <nav><a class="btn" href="{REPO}">GitHub</a></nav>
 </div></header>
 <main>
+  <div class="minta" role="note"><b>⚠️ {html.escape(imp.MINTA_CIM)}</b>
+    <div>A lenti riport egy <strong>kitalált</strong> portfólióra készült, csak bemutató. A kínálati táblázat viszont a valódi, mai kínálat.</div>
+    <div style="margin-top:6px"><strong>A saját portfóliód elemzése:</strong> töltsd le a programot a <a href="{REPO}">GitHubról</a>
+    (<code>pip install -r requirements.txt</code>, majd <code>python app/webapp.py</code>), és:</div>
+    <ol>{"".join(f"<li>{html.escape(x)}</li>" for x in imp.MINTA_LEPESEK)}</ol></div>
   <div class="card">
     <h2>Mi ez?</h2>
     <p>Naponta frissülő összesítés a <strong>Magyar Államkincstárnál</strong> kapható lakossági állampapírokról: a most kapható sorozatok
